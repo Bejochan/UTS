@@ -1,0 +1,13 @@
+# File log
+*.log
+
+# File sementara Python
+__pycache__/
+*.pyc
+
+# Dataset besar yang tidak perlu dilacak
+/data/
+
+# File IDE dan editor
+.vscode/
+.idea/
