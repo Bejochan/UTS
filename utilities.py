@@ -1,4 +1,4 @@
-def print_matrix(matrix):
+#def print_matrix(matrix):
  """
  Mencetak isi dari objek matriks.
  """

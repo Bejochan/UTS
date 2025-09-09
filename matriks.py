@@ -1,4 +1,4 @@
-class Matrix:
+ class Matrix:
  """
  Kelas untuk merepresentasikan objek matriks.
  """
