@@ -5,4 +5,4 @@ def export_to_csv(matrix, filename):
  with open(filename, 'w', newline='') as csvfile:
   writer = csv.writer(csvfile)
   writer.writerows(matrix.data)
- print(f"Matriks berhasil diekspor ke {filename}")
+  print(f"Matriks berhasil diekspor ke {filename}")
