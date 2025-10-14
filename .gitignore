@@ -1,13 +1,14 @@
-# File log
-*.log
-
-# File sementara Python
+# Python cache
 __pycache__/
 *.pyc
 
-# Dataset besar yang tidak perlu dilacak
-/data/
+# Virtual environment
+venv/
+env/
 
-# File IDE dan editor
+# VS Code settings
 .vscode/
-.idea/
+
+# File-file sementara
+*.swp
+*~

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Prediksi via Flask</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        .equation {
+            background-color: #e8f4f8;
+            border-left: 5px solid #1abc9c;
+            padding: 15px;
+            font-size: 1.1em;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .calculator {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .calculator input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            width: 100px;
+        }
+        .calculator button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #1abc9c;
+            color: white;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .calculator button:hover {
+            background-color: #16a085;
+        }
+        #predictionResult {
+            margin-top: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Prediksi Penggunaan HP (via Flask) 🐍</h1>
+
+    <div class="container">
+        <h2>Model Regresi Linear Anda</h2>
+        <div class="equation" id="modelEquation"></div>
+    </div>
+
+    <div class="container">
+        <h2>Kalkulator Prediksi</h2>
+        <div class="calculator">
+            <div>
+                <label for="jamTidur">Jam Tidur:</label><br>
+                <input type="number" id="jamTidur" value="8" step="0.5">
+            </div>
+            <div>
+                <label for="jamAktivitas">Aktivitas Harian (Jam):</label><br>
+                <input type="number" id="jamAktivitas" value="5" step="0.5">
+            </div>
+            <button onclick="predict()">Prediksi</button>
+        </div>
+        <div id="predictionResult"></div>
+    </div>
+    <div class="container">
+        <h2>Visualisasi Data 3D</h2>
+        <div id="plot" style="width:100%; height:500px;"></div>
+    </div>
+
+    <script>
+        // --- Koefisien sekarang diambil dari Python/Flask ---
+        const beta0 = {{ beta0 }};
+        const beta1 = {{ beta1 }};
+        const beta2 = {{ beta2 }};
+        
+        // --- Data mentah juga diambil dari Python/Flask ---
+        const data = {{ plot_data|safe }};
+
+        // Menampilkan persamaan model di halaman
+        document.getElementById('modelEquation').innerText =
+            `HPJam = ${beta0.toFixed(2)} + (${beta1.toFixed(2)} * TidurJam) + (${beta2.toFixed(2)} * AktivitasJam)`;
+        
+        // Fungsi untuk kalkulator prediksi
+        function predict() {
+            const jamTidur = parseFloat(document.getElementById('jamTidur').value);
+            const jamAktivitas = parseFloat(document.getElementById('jamAktivitas').value);
+            
+            if (isNaN(jamTidur) || isNaN(jamAktivitas)) {
+                alert("Mohon masukkan angka yang valid.");
+                return;
+            }
+            
+            const prediksiHPJam = beta0 + (beta1 * jamTidur) + (beta2 * jamAktivitas);
+            const resultElement = document.getElementById('predictionResult');
+            resultElement.innerText = `Prediksi Penggunaan HP: ${prediksiHPJam.toFixed(2)} Jam`;
+        }
+
+        // --- Kode Plotly.js (SAMA PERSIS seperti sebelumnya) ---
+        const traceDataAsli = {
+            x: data.tidur, y: data.aktivitas, z: data.hp,
+            mode: 'markers', type: 'scatter3d', name: 'Data Asli',
+            marker: { color: '#1abc9c', size: 5 }
+        };
+        const x_plane = [4, 11]; const y_plane = [1, 9];
+        const z_plane = [
+            [beta0 + beta1*x_plane[0] + beta2*y_plane[0], beta0 + beta1*x_plane[0] + beta2*y_plane[1]],
+            [beta0 + beta1*x_plane[1] + beta2*y_plane[0], beta0 + beta1*x_plane[1] + beta2*y_plane[1]]
+        ];
+        const traceRegresi = {
+            x: x_plane, y: y_plane, z: z_plane,
+            type: 'surface', name: 'Bidang Regresi', opacity: 0.7, colorscale: 'Blues'
+        };
+        const layout = {
+            title: 'Waktu Penggunaan HP vs. Tidur & Aktivitas',
+            scene: { xaxis:{title:'Jam Tidur'}, yaxis:{title:'Jam Aktivitas'}, zaxis:{title:'Waktu Penggunaan HP'} },
+            margin: { l: 0, r: 0, b: 0, t: 40 }
+        };
+        Plotly.newPlot('plot', [traceDataAsli, traceRegresi], layout);
+        
+        // Panggil fungsi predict() saat halaman pertama kali dimuat
+        predict();
+    </script>
+</body>
+</html>
