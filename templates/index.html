@@ -1,138 +1,935 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Prediksi via Flask</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Prediksi Penggunaan HP - Machine Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        h1, h2 { color: #2c3e50; }
-        .container { background-color: #ffffff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 90%; max-width: 900px; margin-bottom: 20px; }
-        .equation { background-color: #e8f4f8; border-left: 5px solid #1abc9c; padding: 15px; font-size: 1.1em; margin: 20px 0; border-radius: 5px; font-family: 'Courier New', Courier, monospace; }
-        .calculator { display: flex; gap: 15px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
-        .calculator input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em; width: 100px; }
-        .calculator button { padding: 10px 20px; border: none; background-color: #1abc9c; color: white; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.3s; }
-        .calculator button:hover { background-color: #16a085; }
-        #predictionResult { margin-top: 15px; font-size: 1.2em; font-weight: bold; color: #2980b9; }
-        .plot-box { width: 100%; margin-top: 20px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #667eea;
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .input-wrapper input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .input-wrapper input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .input-value {
+            position: absolute;
+            right: 0;
+            top: -30px;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            margin-top: 10px;
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 40px 30px;
+        }
+
+        .result-value {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            animation: scaleIn 0.5s ease;
+        }
+
+        .result-label {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .kategori-badge {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 15px 0;
+        }
+
+        .rekomendasi-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+            text-align: left;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .info-box .value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        .model-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .model-equation {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #333;
+            text-align: center;
+            margin: 10px 0;
+            border: 2px solid #667eea;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .history-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .result-value {
+                font-size: 3rem;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Dashboard Prediksi Waktu Penggunaan HP 📱</h1>
-
     <div class="container">
-        <h2>Model Regresi Linear Anda</h2>
-        <div class="equation" id="modelEquation"></div>
-    </div>
+        <header>
+            <h1><i class="fas fa-mobile-alt"></i> Prediksi Waktu Penggunaan HP</h1>
+            <p>Berbasis Machine Learning dengan Regresi Linier Berganda</p>
+        </header>
 
-    <div class="container">
-        <h2>Kalkulator Prediksi</h2>
-        <div class="calculator">
-            <div>
-                <label for="jamTidur">Jam Tidur:</label><br>
-                <input type="number" id="jamTidur" value="8" step="0.5">
-            </div>
-            <div>
-                <label for="jamAktivitas">Aktivitas Harian (Jam):</label><br>
-                <input type="number" id="jamAktivitas" value="5" step="0.5">
-            </div>
-            <button onclick="predict()">Prediksi</button>
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('prediction')">
+                <i class="fas fa-chart-line"></i> Prediksi
+            </button>
+            <button class="tab-button" onclick="switchTab('history')">
+                <i class="fas fa-history"></i> History
+            </button>
+            <button class="tab-button" onclick="switchTab('statistics')">
+                <i class="fas fa-chart-bar"></i> Statistik
+            </button>
         </div>
-        <div id="predictionResult"></div>
-    </div>
-    
-    <div class="container">
-        <h2>Visualisasi Data Eksplorasi</h2>
-        
-        <div id="heatmap-plot" class="plot-box"></div>
-        
-        <div id="splom-plot" class="plot-box"></div>
+
+        <!-- Tab 1: Prediction -->
+        <div id="prediction" class="tab-content active">
+            <div class="main-grid">
+                <!-- Input Card -->
+                <div class="card">
+                    <h2><i class="fas fa-sliders-h"></i> Input Data</h2>
+                    <form id="predictionForm">
+                        <div class="form-group">
+                            <label for="tidur"><i class="fas fa-bed"></i> Jam Tidur per Hari</label>
+                            <div class="input-wrapper">
+                                <input type="range" id="tidur" name="tidur" min="3" max="12" value="7" step="0.5">
+                                <span class="input-value" id="tidurValue">7 jam</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="aktivitas"><i class="fas fa-running"></i> Jam Aktivitas per Hari</label>
+                            <div class="input-wrapper">
+                                <input type="range" id="aktivitas" name="aktivitas" min="0" max="16" value="8" step="0.5">
+                                <span class="input-value" id="aktivitasValue">8 jam</span>
+                            </div>
+                        </div>
+
+                        <button type="submit"><i class="fas fa-magic"></i> Prediksi Sekarang</button>
+                    </form>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Memproses prediksi...</p>
+                    </div>
+
+                    <div class="model-info">
+                        <h3><i class="fas fa-info-circle"></i> Informasi Model</h3>
+                        <div class="model-equation" id="modelEquation">Loading...</div>
+                        <div class="stats-grid" id="modelStats">
+                            <div class="stat-item">
+                                <div class="stat-label">R² Score (Akurasi)</div>
+                                <div class="stat-value" id="r2Score">-</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Dataset Training</div>
+                                <div class="stat-value" id="nSamples">-</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">MSE (Error)</div>
+                                <div class="stat-value" id="mseValue">-</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">MAE (Error Rata-rata)</div>
+                                <div class="stat-value" id="maeValue">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result Card -->
+                <div class="card result-card">
+                    <h2><i class="fas fa-chart-pie"></i> Hasil Prediksi</h2>
+                    <div id="resultContent" class="hidden">
+                        <p class="result-label">Estimasi Penggunaan HP</p>
+                        <div class="result-value" id="prediksiValue">-</div>
+                        <p style="color: #999; font-size: 0.9rem;">jam per hari</p>
+                        
+                        <div class="kategori-badge" id="kategoriBadge" style="background: #e0e0e0;">-</div>
+                        
+                        <div class="rekomendasi-box">
+                            <strong style="color: #667eea;"><i class="fas fa-lightbulb"></i> Rekomendasi:</strong>
+                            <p id="rekomendasiText" style="margin-top: 10px;">-</p>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <div class="value" id="sisaWaktu">-</div>
+                                <div class="label">Sisa Waktu Produktif</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="value" id="persentaseHP">-</div>
+                                <div class="label">% Waktu di HP</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="noResult">
+                        <div class="empty-state">
+                            <i class="fas fa-mobile-alt"></i>
+                            <p>Masukkan data dan klik "Prediksi Sekarang"<br>untuk melihat hasil prediksi</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Card -->
+            <div class="card">
+                <h2><i class="fas fa-chart-scatter"></i> Visualisasi Data Training</h2>
+                <div class="chart-container">
+                    <canvas id="scatterChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: History -->
+        <div id="history" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-history"></i> Riwayat Prediksi</h2>
+                <button class="btn-secondary" onclick="exportHistory()">
+                    <i class="fas fa-download"></i> Export History ke CSV
+                </button>
+                <div id="historyContent">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Belum ada riwayat prediksi.<br>Lakukan prediksi untuk melihat history.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Statistics -->
+        <div id="statistics" class="tab-content">
+            <div class="main-grid">
+                <div class="card">
+                    <h2><i class="fas fa-database"></i> Statistik Dataset</h2>
+                    <div id="datasetStats">Loading...</div>
+                    <button class="btn-secondary" style="margin-top: 20px;" onclick="exportDataset()">
+                        <i class="fas fa-download"></i> Export Dataset ke CSV
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-brain"></i> Performa Model</h2>
+                    <div id="modelPerformance">Loading...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-chart-area"></i> Distribusi Data</h2>
+                <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Data dan koefisien dari Flask
-        const beta0 = {{ beta0 }};
-        const beta1 = {{ beta1 }};
-        const beta2 = {{ beta2 }};
-        const data = {{ plot_data|safe }};
-
-        // Menampilkan persamaan model
-        document.getElementById('modelEquation').innerText =
-            `HPJam = ${beta0.toFixed(2)} + (${beta1.toFixed(2)} * TidurJam) + (${beta2.toFixed(2)} * AktivitasJam)`;
-        
-        // Fungsi kalkulator (tetap sama)
-        function predict() {
-            const jamTidur = parseFloat(document.getElementById('jamTidur').value);
-            const jamAktivitas = parseFloat(document.getElementById('jamAktivitas').value);
-            if (isNaN(jamTidur) || isNaN(jamAktivitas)) { return; }
-            const prediksiHPJam = beta0 + (beta1 * jamTidur) + (beta2 * jamAktivitas);
-            document.getElementById('predictionResult').innerText = `Prediksi Penggunaan HP: ${prediksiHPJam.toFixed(2)} Jam`;
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load data based on tab
+            if (tabName === 'history') {
+                loadHistory();
+            } else if (tabName === 'statistics') {
+                loadStatistics();
+            }
         }
 
-        // --- VISUALISASI BARU ---
+        // Update slider values
+        document.getElementById('tidur').addEventListener('input', function(e) {
+            document.getElementById('tidurValue').textContent = e.target.value + ' jam';
+        });
 
-        // 1. Heatmap (menggunakan 2D Histogram Contour)
-        const heatmapTrace = {
-            x: data.tidur,
-            y: data.aktivitas,
-            z: data.hp,
-            type: 'histogram2dcontour',
-            colorscale: 'Viridis',
-            reversescale: true,
-            showscale: false,
-            contours: {
-                coloring: 'heatmap'
-            }
-        };
-        const heatmapPoints = {
-            x: data.tidur,
-            y: data.aktivitas,
-            mode: 'markers',
-            type: 'scatter',
-            showlegend: false,
-            marker: {
-                color: 'black',
-                size: 3,
-                opacity: 0.5
-            }
-        };
-        const heatmapLayout = {
-            title: 'Heatmap Interaksi: Penggunaan HP Rata-Rata',
-            xaxis: { title: 'Jam Tidur' },
-            yaxis: { title: 'Aktivitas Harian (Jam)' },
-            autosize: true
-        };
-        Plotly.newPlot('heatmap-plot', [heatmapPoints, heatmapTrace], heatmapLayout);
+        document.getElementById('aktivitas').addEventListener('input', function(e) {
+            document.getElementById('aktivitasValue').textContent = e.target.value + ' jam';
+        });
 
-        // 2. Scatter Plot Matrix (SPLOM)
-        const splomTrace = {
-            type: 'splom',
-            dimensions: [
-                {label: 'Jam Tidur', values: data.tidur},
-                {label: 'Aktivitas (Jam)', values: data.aktivitas},
-                {label: 'Penggunaan HP (Jam)', values: data.hp}
-            ],
-            text: data.hp,
-            marker: {
-                color: data.hp,
-                colorscale: 'Viridis',
-                showscale: true,
-                line: {
-                    color: 'white',
-                    width: 0.5
+        // Load model info
+        fetch('/model-info')
+            .then(response => response.json())
+            .then(data => {
+                const equation = `HP = ${data.intercept.toFixed(2)} ${data.coef_tidur >= 0 ? '+' : ''} ${data.coef_tidur.toFixed(2)}×Tidur ${data.coef_aktivitas >= 0 ? '+' : ''} ${data.coef_aktivitas.toFixed(2)}×Aktivitas`;
+                document.getElementById('modelEquation').textContent = equation;
+                document.getElementById('r2Score').textContent = (data.r2_score * 100).toFixed(1) + '%';
+                document.getElementById('nSamples').textContent = data.n_samples + ' data';
+                document.getElementById('mseValue').textContent = data.mse.toFixed(2);
+                document.getElementById('maeValue').textContent = data.mae.toFixed(2);
+            });
+
+        // Load and visualize dataset
+        let scatterChart;
+        fetch('/dataset')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('scatterChart').getContext('2d');
+                scatterChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Tidur vs HP',
+                            data: data.map(d => ({
+                                x: d.tidur,
+                                y: d.hp
+                            })),
+                            backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            pointRadius: 4
+                        }, {
+                            label: 'Aktivitas vs HP',
+                            data: data.map(d => ({
+                                x: d.aktivitas,
+                                y: d.hp
+                            })),
+                            backgroundColor: 'rgba(118, 75, 162, 0.6)',
+                            borderColor: 'rgba(118, 75, 162, 1)',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Jam (Tidur/Aktivitas)',
+                                    font: { size: 14 }
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Jam Penggunaan HP',
+                                    font: { size: 14 }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: (${context.parsed.x}, ${context.parsed.y.toFixed(2)} jam)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+        // Form submission
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const tidur = parseFloat(document.getElementById('tidur').value);
+            const aktivitas = parseFloat(document.getElementById('aktivitas').value);
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultContent').classList.add('hidden');
+            document.getElementById('noResult').style.display = 'none';
+            
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ tidur, aktivitas })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    document.getElementById('noResult').style.display = 'block';
+                    return;
                 }
-            }
-        };
-        const splomLayout = {
-            title: 'Scatter Plot Matrix: Hubungan Antar Variabel',
-            autosize: true,
-            height: 600
-        };
-        Plotly.newPlot('splom-plot', [splomTrace], splomLayout);
+                
+                document.getElementById('prediksiValue').textContent = data.prediksi;
+                const badge = document.getElementById('kategoriBadge');
+                badge.textContent = data.kategori;
+                badge.style.background = data.kategori_color;
+                badge.style.color = 'white';
+                
+                document.getElementById('rekomendasiText').textContent = data.rekomendasi;
+                
+                const sisaWaktu = 24 - tidur - aktivitas - data.prediksi;
+                document.getElementById('sisaWaktu').textContent = sisaWaktu.toFixed(1) + ' jam';
+                
+                const persentase = (data.prediksi / 24 * 100).toFixed(1);
+                document.getElementById('persentaseHP').textContent = persentase + '%';
+                
+                document.getElementById('resultContent').classList.remove('hidden');
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('noResult').style.display = 'block';
+                alert('Terjadi kesalahan: ' + error);
+            });
+        });
 
-        // Panggil fungsi predict() saat halaman dimuat
-        predict();
+        // Load history
+        function loadHistory() {
+            fetch('/history')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('historyContent');
+                    
+                    if (data.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>Belum ada riwayat prediksi.<br>Lakukan prediksi untuk melihat history.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let html = `
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th>
+                                    <th>Tidur</th>
+                                    <th>Aktivitas</th>
+                                    <th>Prediksi HP</th>
+                                    <th>Kategori</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.reverse().forEach(entry => {
+                        html += `
+                            <tr>
+                                <td>${entry.timestamp}</td>
+                                <td>${entry.tidur} jam</td>
+                                <td>${entry.aktivitas} jam</td>
+                                <td><strong>${entry.prediksi} jam</strong></td>
+                                <td>${entry.kategori}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                });
+        }
+
+        // Load statistics
+        function loadStatistics() {
+            fetch('/statistics')
+                .then(response => response.json())
+                .then(data => {
+                    // Dataset stats
+                    const datasetHtml = `
+                        <div class="model-info">
+                            <h3><i class="fas fa-bed"></i> Jam Tidur</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-label">Minimum</div>
+                                    <div class="stat-value">${data.dataset.tidur.min.toFixed(1)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Maksimum</div>
+                                    <div class="stat-value">${data.dataset.tidur.max.toFixed(1)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Rata-rata</div>
+                                    <div class="stat-value">${data.dataset.tidur.mean.toFixed(2)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Std Dev</div>
+                                    <div class="stat-value">${data.dataset.tidur.std.toFixed(2)}</div>
+                                </div>
+                            </div>
+                            
+                            <h3 style="margin-top: 20px;"><i class="fas fa-running"></i> Jam Aktivitas</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-label">Minimum</div>
+                                    <div class="stat-value">${data.dataset.aktivitas.min.toFixed(1)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Maksimum</div>
+                                    <div class="stat-value">${data.dataset.aktivitas.max.toFixed(1)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Rata-rata</div>
+                                    <div class="stat-value">${data.dataset.aktivitas.mean.toFixed(2)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Std Dev</div>
+                                    <div class="stat-value">${data.dataset.aktivitas.std.toFixed(2)}</div>
+                                </div>
+                            </div>
+                            
+                            <h3 style="margin-top: 20px;"><i class="fas fa-mobile-alt"></i> Penggunaan HP</h3>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-label">Minimum</div>
+                                    <div class="stat-value">${data.dataset.hp.min.toFixed(1)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Maksimum</div>
+                                    <div class="stat-value">${data.dataset.hp.max.toFixed(1)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Rata-rata</div>
+                                    <div class="stat-value">${data.dataset.hp.mean.toFixed(2)} jam</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Std Dev</div>
+                                    <div class="stat-value">${data.dataset.hp.std.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('datasetStats').innerHTML = datasetHtml;
+                    
+                    // Model performance
+                    const performanceHtml = `
+                        <div class="model-info">
+                            <div class="info-box" style="margin-bottom: 15px;">
+                                <div class="label">R² Score (Akurasi)</div>
+                                <div class="value">${(data.model.r2_score * 100).toFixed(2)}%</div>
+                            </div>
+                            <div class="info-box" style="margin-bottom: 15px;">
+                                <div class="label">Mean Squared Error</div>
+                                <div class="value">${data.model.mse.toFixed(4)}</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="label">Mean Absolute Error</div>
+                                <div class="value">${data.model.mae.toFixed(4)}</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 20px;">
+                                <p style="color: #666; font-size: 0.9rem; line-height: 1.6;">
+                                    <strong>Interpretasi:</strong><br>
+                                    R² Score ${(data.model.r2_score * 100).toFixed(1)}% artinya model dapat menjelaskan 
+                                    ${(data.model.r2_score * 100).toFixed(1)}% variasi dalam data. 
+                                    ${data.model.r2_score > 0.8 ? 'Model sangat baik!' : data.model.r2_score > 0.6 ? 'Model cukup baik.' : 'Model perlu perbaikan.'}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('modelPerformance').innerHTML = performanceHtml;
+                    
+                    // Create distribution chart
+                    createDistributionChart(data.dataset);
+                });
+        }
+
+        // Create distribution chart
+        function createDistributionChart(dataset) {
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jam Tidur', 'Jam Aktivitas', 'Jam HP'],
+                    datasets: [{
+                        label: 'Rata-rata',
+                        data: [dataset.tidur.mean, dataset.aktivitas.mean, dataset.hp.mean],
+                        backgroundColor: ['#667eea', '#764ba2', '#10b981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jam per Hari'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Export functions
+        function exportHistory() {
+            window.location.href = '/export/history';
+        }
+
+        function exportDataset() {
+            window.location.href = '/export/dataset';
+        }
     </script>
 </body>
 </html>
