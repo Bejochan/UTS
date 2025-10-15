@@ -6,73 +6,20 @@
     <title>Dashboard Prediksi via Flask</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h1, h2 {
-            color: #2c3e50;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 800px;
-            margin-bottom: 20px;
-        }
-        .equation {
-            background-color: #e8f4f8;
-            border-left: 5px solid #1abc9c;
-            padding: 15px;
-            font-size: 1.1em;
-            margin: 20px 0;
-            border-radius: 5px;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        .calculator {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            margin-top: 10px;
-        }
-        .calculator input {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1em;
-            width: 100px;
-        }
-        .calculator button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #1abc9c;
-            color: white;
-            border-radius: 5px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .calculator button:hover {
-            background-color: #16a085;
-        }
-        #predictionResult {
-            margin-top: 15px;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2980b9;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        h1, h2 { color: #2c3e50; }
+        .container { background-color: #ffffff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 90%; max-width: 900px; margin-bottom: 20px; }
+        .equation { background-color: #e8f4f8; border-left: 5px solid #1abc9c; padding: 15px; font-size: 1.1em; margin: 20px 0; border-radius: 5px; font-family: 'Courier New', Courier, monospace; }
+        .calculator { display: flex; gap: 15px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+        .calculator input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 1em; width: 100px; }
+        .calculator button { padding: 10px 20px; border: none; background-color: #1abc9c; color: white; border-radius: 5px; font-size: 1em; cursor: pointer; transition: background-color 0.3s; }
+        .calculator button:hover { background-color: #16a085; }
+        #predictionResult { margin-top: 15px; font-size: 1.2em; font-weight: bold; color: #2980b9; }
+        .plot-box { width: 100%; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <h1>Dashboard Prediksi Penggunaan HP (via Flask) 🐍</h1>
+    <h1>Dashboard Prediksi Waktu Penggunaan HP 📱</h1>
 
     <div class="container">
         <h2>Model Regresi Linear Anda</h2>
@@ -94,62 +41,97 @@
         </div>
         <div id="predictionResult"></div>
     </div>
+    
     <div class="container">
-        <h2>Visualisasi Data 3D</h2>
-        <div id="plot" style="width:100%; height:500px;"></div>
+        <h2>Visualisasi Data Eksplorasi</h2>
+        
+        <div id="heatmap-plot" class="plot-box"></div>
+        
+        <div id="splom-plot" class="plot-box"></div>
     </div>
 
     <script>
-        // --- Koefisien sekarang diambil dari Python/Flask ---
+        // Data dan koefisien dari Flask
         const beta0 = {{ beta0 }};
         const beta1 = {{ beta1 }};
         const beta2 = {{ beta2 }};
-        
-        // --- Data mentah juga diambil dari Python/Flask ---
         const data = {{ plot_data|safe }};
 
-        // Menampilkan persamaan model di halaman
+        // Menampilkan persamaan model
         document.getElementById('modelEquation').innerText =
             `HPJam = ${beta0.toFixed(2)} + (${beta1.toFixed(2)} * TidurJam) + (${beta2.toFixed(2)} * AktivitasJam)`;
         
-        // Fungsi untuk kalkulator prediksi
+        // Fungsi kalkulator (tetap sama)
         function predict() {
             const jamTidur = parseFloat(document.getElementById('jamTidur').value);
             const jamAktivitas = parseFloat(document.getElementById('jamAktivitas').value);
-            
-            if (isNaN(jamTidur) || isNaN(jamAktivitas)) {
-                alert("Mohon masukkan angka yang valid.");
-                return;
-            }
-            
+            if (isNaN(jamTidur) || isNaN(jamAktivitas)) { return; }
             const prediksiHPJam = beta0 + (beta1 * jamTidur) + (beta2 * jamAktivitas);
-            const resultElement = document.getElementById('predictionResult');
-            resultElement.innerText = `Prediksi Penggunaan HP: ${prediksiHPJam.toFixed(2)} Jam`;
+            document.getElementById('predictionResult').innerText = `Prediksi Penggunaan HP: ${prediksiHPJam.toFixed(2)} Jam`;
         }
 
-        // --- Kode Plotly.js (SAMA PERSIS seperti sebelumnya) ---
-        const traceDataAsli = {
-            x: data.tidur, y: data.aktivitas, z: data.hp,
-            mode: 'markers', type: 'scatter3d', name: 'Data Asli',
-            marker: { color: '#1abc9c', size: 5 }
+        // --- VISUALISASI BARU ---
+
+        // 1. Heatmap (menggunakan 2D Histogram Contour)
+        const heatmapTrace = {
+            x: data.tidur,
+            y: data.aktivitas,
+            z: data.hp,
+            type: 'histogram2dcontour',
+            colorscale: 'Viridis',
+            reversescale: true,
+            showscale: false,
+            contours: {
+                coloring: 'heatmap'
+            }
         };
-        const x_plane = [4, 11]; const y_plane = [1, 9];
-        const z_plane = [
-            [beta0 + beta1*x_plane[0] + beta2*y_plane[0], beta0 + beta1*x_plane[0] + beta2*y_plane[1]],
-            [beta0 + beta1*x_plane[1] + beta2*y_plane[0], beta0 + beta1*x_plane[1] + beta2*y_plane[1]]
-        ];
-        const traceRegresi = {
-            x: x_plane, y: y_plane, z: z_plane,
-            type: 'surface', name: 'Bidang Regresi', opacity: 0.7, colorscale: 'Blues'
+        const heatmapPoints = {
+            x: data.tidur,
+            y: data.aktivitas,
+            mode: 'markers',
+            type: 'scatter',
+            showlegend: false,
+            marker: {
+                color: 'black',
+                size: 3,
+                opacity: 0.5
+            }
         };
-        const layout = {
-            title: 'Waktu Penggunaan HP vs. Tidur & Aktivitas',
-            scene: { xaxis:{title:'Jam Tidur'}, yaxis:{title:'Jam Aktivitas'}, zaxis:{title:'Waktu Penggunaan HP'} },
-            margin: { l: 0, r: 0, b: 0, t: 40 }
+        const heatmapLayout = {
+            title: 'Heatmap Interaksi: Penggunaan HP Rata-Rata',
+            xaxis: { title: 'Jam Tidur' },
+            yaxis: { title: 'Aktivitas Harian (Jam)' },
+            autosize: true
         };
-        Plotly.newPlot('plot', [traceDataAsli, traceRegresi], layout);
-        
-        // Panggil fungsi predict() saat halaman pertama kali dimuat
+        Plotly.newPlot('heatmap-plot', [heatmapPoints, heatmapTrace], heatmapLayout);
+
+        // 2. Scatter Plot Matrix (SPLOM)
+        const splomTrace = {
+            type: 'splom',
+            dimensions: [
+                {label: 'Jam Tidur', values: data.tidur},
+                {label: 'Aktivitas (Jam)', values: data.aktivitas},
+                {label: 'Penggunaan HP (Jam)', values: data.hp}
+            ],
+            text: data.hp,
+            marker: {
+                color: data.hp,
+                colorscale: 'Viridis',
+                showscale: true,
+                line: {
+                    color: 'white',
+                    width: 0.5
+                }
+            }
+        };
+        const splomLayout = {
+            title: 'Scatter Plot Matrix: Hubungan Antar Variabel',
+            autosize: true,
+            height: 600
+        };
+        Plotly.newPlot('splom-plot', [splomTrace], splomLayout);
+
+        // Panggil fungsi predict() saat halaman dimuat
         predict();
     </script>
 </body>
